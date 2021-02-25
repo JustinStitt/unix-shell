@@ -1,3 +1,16 @@
+/*  
+    Justin Stitt
+    2/24/2021
+
+    UNIX Shell Project
+
+    to-do: 
+    * piping
+    * & (no-wait)
+    * io redirect
+    * parent/child pipe communication ???
+*/
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -17,7 +30,7 @@ void tokparse(char* input, char* cargs[]){
 
     while(token != NULL){
         // add token to cargs
-        printf("token %d: %s\n", num_args, token);
+        //printf("token %d: %s\n", num_args, token);
         token = strtok(NULL, delim);
         cargs[++num_args] = token;
     }
@@ -34,7 +47,7 @@ int main(int argc, const char* argv[]){
     while(1){
         printf("osh> ");  // command line prefix
         fflush(stdout);   // force flush to console
-        
+
         // read into input from stdin
         fgets(input, BUFSIZ, stdin);
         input[strlen(input) - 1] = '\0'; // replace newline with null
@@ -52,16 +65,18 @@ int main(int argc, const char* argv[]){
         if(pid != 0){  // parent
             //do parent stuff like wait, etc.
             wait(NULL);
-            printf("child completed...\n");
+            //printf("child completed...\n");
         }
         else{          // child
-            printf("child process start...\n");
+            //printf("child process start...\n");
             char* cargs[BUFSIZ];    // buffer to hold command line arguments
             memset(cargs, 0, BUFSIZ * sizeof(char));
 
             // if we use '!!' we want to read from MRU cache
-            if(strncmp(input, "!!", 2) == 0)
+            if(strncmp(input, "!!", 2) == 0){
                 tokparse(MRU, cargs);
+                if(MRU[0] == '\0') printf("No recently used command.\n");
+            }
             else
                 tokparse(input, cargs); 
             execvp(cargs[0], cargs);
