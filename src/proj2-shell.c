@@ -138,8 +138,10 @@ int main(int argc, const char* argv[]){
                 }
 
                 char* lhs[BUFSIZ], *rhs[BUFSIZ];
+                /* set buffers to 0 */
                 memset(lhs, 0, BUFSIZ*sizeof(char));
                 memset(rhs, 0, BUFSIZ*sizeof(char));
+
                 for(int x = 0; x < pipe_rhs_offset; ++x){
                     lhs[x] = cargs[x];
                 }
@@ -148,6 +150,7 @@ int main(int argc, const char* argv[]){
                     if(cargs[idx] == 0) break;
                     rhs[x] = cargs[idx];
                 }
+                
                 pidc = fork();// create child to handle pipe's rhs
                 if(pidc < 0){
                     fprintf(stderr, "fork failed...\n");
@@ -155,14 +158,14 @@ int main(int argc, const char* argv[]){
                 }
                 if(pidc != 0){// parent process 
                     dup2(pipefd[WRITE_END], STDOUT_FILENO);// duplicate stdout to write end of file descriptor
-                    close(pipefd[WRITE_END]);
+                    close(pipefd[WRITE_END]);// close write end of pipe
                     execvp(lhs[0], lhs);
                     exit(0); 
                 }else{// child process
-                    dup2(pipefd[READ_END], STDIN_FILENO);
-                    close(pipefd[READ_END]);
-                    execvp(rhs[0], rhs);
-                    exit(0); 
+                    dup2(pipefd[READ_END], STDIN_FILENO);// copy read end of pipe to stdin
+                    close(pipefd[READ_END]);// close read end of pipe
+                    execvp(rhs[0], rhs);// execute command in child
+                    exit(0); // kill
                 }
                 wait(NULL);
             }
@@ -174,6 +177,12 @@ int main(int argc, const char* argv[]){
     return 0;
 }
 
+/* 
+    Locate a pipe char and return its index
+    I could've just used strstr(haystack, needle) and computed
+    the offset, but this way seemed easier at the time and now I don't 
+    feel like refactoring it. :)
+ */
 int find_pipe_rhs(char** cargs){
     int idx = 0;
     while(cargs[idx] != '\0'){
