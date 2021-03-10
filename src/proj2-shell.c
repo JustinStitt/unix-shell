@@ -80,6 +80,10 @@ int main(int argc, const char* argv[]){
             return 0;
         if(strncmp(input, "!!", 2)) // history (MRU cache)
             strcpy(MRU, input);      
+        // should we wait 'daemon' operator
+        bool dowait = true;
+        char* wait_offset = strstr(input, "&");
+        if(wait_offset != NULL){*wait_offset = ' '; dowait=false;}
 
         pid_t pid = fork();
         if(pid < 0){   // failed to create child process
@@ -88,8 +92,11 @@ int main(int argc, const char* argv[]){
         }
         if(pid != 0){  // parent
             //do parent stuff like wait, etc.
-            wait(NULL);// turn off if used with '&'
-            wait(NULL);
+            // consider using strstr(input, "&") != NULL
+            if(dowait){
+                wait(NULL);// turn off if used with '&'
+                wait(NULL);
+            }
             //printf("child completed...\n");
         }
         else{          // child
